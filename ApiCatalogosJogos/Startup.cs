@@ -1,3 +1,4 @@
+using ApiCatalogosJogos.Controllers.V1;
 using ApiCatalogosJogos.Repositories;
 using ApiCatalogosJogos.Services;
 using Microsoft.AspNetCore.Builder;
@@ -31,10 +32,22 @@ namespace ApiCatalogosJogos
             services.AddScoped<IJogoService, JogoService>();
             services.AddScoped<IJogoRepository, JogoSqlServerRepository>();
 
+            #region CiclioDeVida
+
+            services.AddSingleton<IExemploSingleton, ExemploCicloDeVida>();
+            services.AddScoped<IExemploScoped, ExemploCicloDeVida>();
+            services.AddTransient<IExemploTransient, ExemploCicloDeVida>();
+
+            #endregion
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ApiCatalogosJogos", Version = "v1" });
+
+                var basePath = AppDomain.CurrentDomain.BaseDirectory;
+                var fileName = typeof(Startup).GetTypeInfo().Assembly.GetName().Name + ".xml";
+                c.IncludeXmlComments(Path.Combine(basePath, fileName));
             });
         }
 
@@ -47,6 +60,8 @@ namespace ApiCatalogosJogos
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiCatalogosJogos v1"));
             }
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseHttpsRedirection();
 
